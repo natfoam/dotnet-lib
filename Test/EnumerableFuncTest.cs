@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Test
 {
-    public class UnitTest1
+    public class EnumerableFuncTest
     {
         class GetItemTypeName : IEnumerableFunc<string>
         {

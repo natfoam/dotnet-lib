@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GenericCast\EnumerableFunc.csproj" />
+    <ProjectReference Include="..\EnumerableFunc\EnumerableFunc.csproj" />
   </ItemGroup>
 
 </Project>
