@@ -5,28 +5,28 @@ namespace GenericCast
 {
     public interface IEnumerableFunc<R>
     {
-        R Invoke<T>(IEnumerable<T> v);
-    }
-
-    interface IEnumerableWrap
-    {
-        R Invoke<R>(IEnumerableFunc<R> r);
+        R Do<T>(IEnumerable<T> v);
     }
 
     public static class EnumerableCast {
-        public static R Invoke<R>(this IEnumerable v, IEnumerableFunc<R> r) =>
-            CreateWrap(v).Invoke(r);
-
-        sealed class Wrap<T> : IEnumerableWrap
+        public static R Invoke<R>(this IEnumerable value, IEnumerableFunc<R> func)
         {
-            public IEnumerable<T> value;
-            public R Invoke<R>(IEnumerableFunc<R> r) => r.Invoke(value);
+            IWrap wrap = CreateWrap((dynamic)value);
+            return wrap.Invoke(func);
         }
 
-        static IEnumerableWrap CreateWrap(IEnumerable v) =>
-            CreateGenericWrap((dynamic)v);
+        interface IWrap
+        {
+            R Invoke<R>(IEnumerableFunc<R> r);
+        }
 
-        static IEnumerableWrap CreateGenericWrap<T>(IEnumerable<T> value) 
+        sealed class Wrap<T> : IWrap
+        {
+            public IEnumerable<T> value;
+            public R Invoke<R>(IEnumerableFunc<R> func) => func.Do(value);
+        }
+
+        static IWrap CreateWrap<T>(IEnumerable<T> value) 
             => new Wrap<T> { value = value };
     }
 }
