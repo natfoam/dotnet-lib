@@ -19,6 +19,7 @@ namespace Test
         {
             var list = new List<int>();
             var name = list.Invoke(new GetItemTypeName());
+            // should be something like `if list is IEnumerable<var T> newList { ... }`
             Assert.Equal("Int32", name);
         }
     }
