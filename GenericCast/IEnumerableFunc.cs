@@ -1,14 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace GenericCast
+namespace EnumerableFunc
 {
     public interface IEnumerableFunc<R>
     {
         R Do<T>(IEnumerable<T> v);
     }
 
-    public static class EnumerableCast {
+    public static class EnumerableFuncEx {
         public static R Invoke<R>(this IEnumerable value, IEnumerableFunc<R> func)
         {
             IWrap wrap = CreateWrap((dynamic)value);

@@ -1,4 +1,4 @@
-using GenericCast;
+using EnumerableFunc;
 using System.Collections.Generic;
 using Xunit;
 
