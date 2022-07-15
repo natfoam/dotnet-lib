@@ -8,10 +8,7 @@ namespace Test
     {
         class GetItemTypeName : IEnumerableFunc<string>
         {
-            public string Do<T>(IEnumerable<T> v)
-            {
-                return typeof(T).Name;
-            }
+            public string Do<T>(IEnumerable<T> v) => typeof(T).Name;
         }
 
         [Fact]
