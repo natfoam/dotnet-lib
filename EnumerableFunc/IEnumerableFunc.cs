@@ -14,20 +14,6 @@ namespace EnumerableFunc
 
     public static class EnumerableFuncEx {
         public static R Invoke<R>(this IEnumerable value, IEnumerableFunc<R> func) 
-            => CreateWrap((dynamic)value).Invoke(func);
-
-        interface IWrap
-        {
-            R Invoke<R>(IEnumerableFunc<R> r);
-        }
-
-        sealed class Wrap<T> : IWrap
-        {
-            public IEnumerable<T> value;
-            public R Invoke<R>(IEnumerableFunc<R> func) => func.Do(value);
-        }
-
-        static IWrap CreateWrap<T>(IEnumerable<T> value) 
-            => new Wrap<T> { value = value };
+            => func.Do((dynamic)value);
     }
 }
