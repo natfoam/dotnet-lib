@@ -29,3 +29,45 @@ foreach (var (name, i) in library.StructMap)
     }
     Console.WriteLine($"}}");
 }
+
+abstract class Item 
+{
+    public abstract IEnumerable<string> Text(string indent, string offset = "");
+}
+
+sealed class Line: Item
+{
+    public readonly string Value;
+
+    public Line(string value)
+    {
+        Value = value;
+    }
+
+    public override IEnumerable<string> Text(string indent, string offset)
+        => new[] { offset + Value };
+}
+
+sealed class Block: Item
+{
+    public readonly IEnumerable<Item> ItemList;
+
+    public Block(IEnumerable<Item> itemList)
+    {
+        ItemList = itemList;
+    }
+
+    public override IEnumerable<string> Text(string indent, string offset)
+        => ItemList.SelectMany(item => item.Text(indent, offset));
+}
+
+static class TextEx
+{
+    public static void Write(this Item item, string indent)
+    {
+        foreach (var line in item.Text(indent))
+        {
+            Console.WriteLine(line);
+        }
+    }
+}
