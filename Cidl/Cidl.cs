@@ -17,24 +17,27 @@ namespace Cidl
                 .Where(type => type.IsValueType && !type.IsEnum && type.IsLayoutSequential)
                 .ToDictionary(type => type.FullName!, type => new Struct(type.DeclaredFields));
         }
+
+        //static IEnumerable<Item> List()
+        //    => Enumerable.Concat(InterfaceMapItemList(InterfaceMap), StructMapItemList(StructMap));
     }
 
     class Struct
     {
-        public readonly Param[] Params;
+        public readonly Param[] FieldList;
 
-        public Struct(Param[] @params)
+        public Struct(Param[] fieldList)
         {
-            Params = @params;
+            FieldList = fieldList;
         }
 
         public Struct(IEnumerable<FieldInfo> info)
         {
-            Params = info.Select(v => new Param(v)).ToArray();
+            FieldList = info.Select(v => new Param(v)).ToArray();
         }
 
         public Block Block()
-            => new Block(Params.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")));
+            => new Block(FieldList.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")));
     }
 
     class Interface
@@ -76,7 +79,7 @@ namespace Cidl
     {
         public readonly string Name;
         public readonly TypeRef? ReturnType;
-        public readonly Param[] Params;
+        public readonly Param[] ParamList;
 
         public Method(MethodInfo method)
         {
@@ -88,12 +91,12 @@ namespace Cidl
             }
             Name = method.Name;
             ReturnType = method.ToCidlReturnType();
-            Params = method.GetParameters().Select(p => new Param(p)).ToArray();
+            ParamList = method.GetParameters().Select(p => new Param(p)).ToArray();
         }
 
         public Line Line()
         {
-            var p = string.Join(", ", Params.Select(v => $"{v.Type.ToCidlString()} {v.Name}"));
+            var p = string.Join(", ", ParamList.Select(v => $"{v.Type.ToCidlString()} {v.Name}"));
             return new Line($"{ReturnType.ToCidlString()} {Name}({p});");
         }
     }
@@ -187,5 +190,22 @@ namespace Cidl
                 NameTypeRef n => n.Name,
                 _ => "void"
             };
+
+        public static IEnumerable<Item> List(this KeyValuePair<string, Struct> kv)
+        {
+            yield return new Line($"struct {kv.Key}");
+            yield return new Line("{");
+            yield return kv.Value.Block();
+            yield return new Line("}");
+        }
+
+        public static IEnumerable<Item> List(this KeyValuePair<string, Interface> kv)
+        {
+            yield return new Line($"[Guid({kv.Value.Guid})]");
+            yield return new Line($"interface {kv.Key}");
+            yield return new Line("{");
+            yield return kv.Value.Block();
+            yield return new Line("}");
+        }
     }
 }
