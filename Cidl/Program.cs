@@ -12,8 +12,8 @@ static IEnumerable<Item> LibraryItemList(Library library)
     => Enumerable.Concat(InterfaceMapItemList(library.InterfaceMap), StructMapItemList(library.StructMap));
 
 static IEnumerable<Item> StructMapItemList(Dictionary<string, Struct> map)
-    => map.SelectMany(TypeEx.List);
+    => map.SelectMany(kv => kv.Value.List(kv.Key));
 
 
 static IEnumerable<Item> InterfaceMapItemList(Dictionary<string, Interface> map)
-    => map.SelectMany(TypeEx.List);
+    => map.SelectMany(kv => kv.Value.List(kv.Key));
