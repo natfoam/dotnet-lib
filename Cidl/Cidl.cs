@@ -147,26 +147,25 @@ namespace Cidl
                 var basicType = info.ToClidBasicType();
                 if (basicType != null) { return new BasicTypeBox(basicType.Value); }
             }
-            if (info.IsPointer)
-            {
-                return new PointerTypeBox(info.GetElementType()!);
-            }
-            return new NameTypeBox(info.FullName!);
+            return info.IsPointer ? 
+                new PointerTypeBox(info.GetElementType()!) :
+                new NameTypeBox(info.FullName!);
         }
 
         public static BasicType? ToClidBasicType(this Type info)
-        {
-            if (info == typeof(sbyte)) { return BasicType.I8; }
-            if (info == typeof(byte)) { return BasicType.U8; }
-            if (info == typeof(short)) { return BasicType.I16; }
-            if (info == typeof(ushort)) { return BasicType.U16; }
-            if (info == typeof(int)) { return BasicType.I32; }
-            if (info == typeof(uint)) { return BasicType.U32; }
-            if (info == typeof(long)) { return BasicType.I64; }
-            if (info == typeof(ulong)) { return BasicType.U64; }
-            if (info == typeof(bool)) { return BasicType.Bool; }
-            return null;
-        }
+            => info switch 
+            { 
+                _ when info == typeof(sbyte) => BasicType.I8,
+                _ when info == typeof(byte) => BasicType.U8,
+                _ when info == typeof(short) => BasicType.I16,
+                _ when info == typeof(ushort) => BasicType.U16,
+                _ when info == typeof(int) => BasicType.I32,
+                _ when info == typeof(uint) => BasicType.U32,
+                _ when info == typeof(long) => BasicType.I64,
+                _ when info == typeof(ulong) => BasicType.U64,
+                _ when info == typeof(bool) => BasicType.Bool,
+                _ => null, 
+            };
 
         public static string ToCidlString(this IType? type)
             => type switch
