@@ -18,8 +18,8 @@ foreach (var (name, i) in interfaces)
     Console.WriteLine($"{{");
     foreach (var m in i.Methods)
     {
-        var p = string.Join(", ", m.Params.Select(v => $"{TypeToString(v.Type)} {v.Name}"));
-        Console.WriteLine($"  {TypeToString(m.ReturnType)} {m.Name}({p});");
+        var p = string.Join(", ", m.Params.Select(v => $"{v.Type.ToCidlString()} {v.Name}"));
+        Console.WriteLine($"  {m.ReturnType.ToCidlString()} {m.Name}({p});");
     }
     Console.WriteLine($"}}");
 }
@@ -30,13 +30,6 @@ foreach (var i in structures)
     Console.WriteLine($"{{");
     Console.WriteLine($"}}");
 }
-
-static string TypeToString(IType? type)
-    => type switch
-    {
-        BasicTypeBox x => x.BasicType.ToString(),
-        _ => "void"
-    };
 
 class Interface
 {
@@ -111,6 +104,16 @@ class BasicTypeBox : IType
     }
 }
 
+class PointerTypeBox : IType
+{
+    public readonly IType Element;
+
+    public PointerTypeBox(Type info)
+    {
+        Element = info.ToCidlType();
+    }
+}
+
 static class TypeEx
 {
     public static IType? ToCidlReturnType(this MethodInfo info)
@@ -124,6 +127,10 @@ static class TypeEx
         {
             var basicType = info.ToClidBasicType();
             if (basicType != null) { return new BasicTypeBox(basicType.Value); }
+        }
+        if (info.IsPointer)
+        {
+            return new PointerTypeBox(info.GetElementType()!);
         }
         throw new Exception("unknown type");
     }
@@ -140,4 +147,12 @@ static class TypeEx
         if (info == typeof(ulong)) { return BasicType.U64; }
         return null;
     }
+
+    public static string ToCidlString(this IType? type)
+        => type switch
+        {
+            BasicTypeBox x => x.BasicType.ToString(),
+            PointerTypeBox p => $"{p.Element.ToCidlString()}*",
+            _ => "void"
+        };
 }
