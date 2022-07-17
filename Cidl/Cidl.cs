@@ -22,7 +22,12 @@ namespace Cidl
         //    => Enumerable.Concat(InterfaceMapItemList(InterfaceMap), StructMapItemList(StructMap));
     }
 
-    class Struct
+    abstract class TypeDef 
+    {
+        public abstract IEnumerable<Item> List(string name);
+    }
+
+    sealed class Struct: TypeDef
     {
         public readonly Param[] FieldList;
 
@@ -36,11 +41,16 @@ namespace Cidl
             FieldList = info.Select(v => new Param(v)).ToArray();
         }
 
-        public Block Block()
-            => new Block(FieldList.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")));
+        public override IEnumerable<Item> List(string name) 
+        {
+            yield return new Line($"struct {name}");
+            yield return new Line("{");
+            yield return new Block(FieldList.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")));
+            yield return new Line("}");
+        }
     }
 
-    class Interface
+    sealed class Interface : TypeDef
     {
         public readonly Guid Guid;
         public readonly Method[] Methods;
@@ -54,8 +64,14 @@ namespace Cidl
                 .ToArray();
         }
 
-        public Block Block()
-           => new Block(Methods.Select(m => m.Line()));
+        public override IEnumerable<Item> List(string name)
+        {
+            yield return new Line($"[Guid({Guid})]");
+            yield return new Line($"interface {name}");
+            yield return new Line("{");
+            yield return new Block(Methods.Select(m => m.Line()));
+            yield return new Line("}");
+        }
     }
 
     class Param
@@ -190,22 +206,5 @@ namespace Cidl
                 NameTypeRef n => n.Name,
                 _ => "void"
             };
-
-        public static IEnumerable<Item> List(this KeyValuePair<string, Struct> kv)
-        {
-            yield return new Line($"struct {kv.Key}");
-            yield return new Line("{");
-            yield return kv.Value.Block();
-            yield return new Line("}");
-        }
-
-        public static IEnumerable<Item> List(this KeyValuePair<string, Interface> kv)
-        {
-            yield return new Line($"[Guid({kv.Value.Guid})]");
-            yield return new Line($"interface {kv.Key}");
-            yield return new Line("{");
-            yield return kv.Value.Block();
-            yield return new Line("}");
-        }
     }
 }
