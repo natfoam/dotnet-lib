@@ -6,29 +6,40 @@ var a = Assembly.LoadFile(
 
 var library = new Library(a.DefinedTypes);
 
-foreach (var (name, i) in library.InterfaceMap)
+LibraryItemList(library).Write("  ");
+
+static IEnumerable<Item> LibraryItemList(Library library)
+    => new[] { InterfaceMapItemList(library.InterfaceMap), StructMapItemList(library.StructMap) }
+        .SelectMany(x => x);
+
+static IEnumerable<Item> StructItemList(KeyValuePair<string, Struct> s)
 {
-    Console.WriteLine($"[Guid({i.Guid})]");
-    Console.WriteLine($"interface {name}");
-    Console.WriteLine($"{{");
-    foreach (var m in i.Methods)
-    {
-        var p = string.Join(", ", m.Params.Select(v => $"{v.Type.ToCidlString()} {v.Name}"));
-        Console.WriteLine($"  {m.ReturnType.ToCidlString()} {m.Name}({p});");
-    }
-    Console.WriteLine($"}}");
+    yield return new Line($"struct {s.Key}");
+    yield return new Line("{");
+    yield return new Block(s.Value.Params.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")));
+    yield return new Line("}");
 }
 
-foreach (var (name, i) in library.StructMap)
+static IEnumerable<Item> StructMapItemList(Dictionary<string, Struct> map)
+    => map.SelectMany(StructItemList);
+
+static Line MethodStr(Method m)
 {
-    Console.WriteLine($"struct {name}");
-    Console.WriteLine($"{{");
-    foreach (var f in i.Params)
-    {
-        Console.WriteLine($"  {f.Type.ToCidlString()} {f.Name};");
-    }
-    Console.WriteLine($"}}");
+    var p = string.Join(", ", m.Params.Select(v => $"{v.Type.ToCidlString()} {v.Name}"));
+    return new Line($"{m.ReturnType.ToCidlString()} {m.Name}({p});");
 }
+
+static IEnumerable<Item> InterfaceItemList(KeyValuePair<string, Interface> i)
+{
+    yield return new Line($"[Guid({i.Value.Guid})]");
+    yield return new Line($"interface {i.Key}");
+    yield return new Line("{");
+    yield return new Block(i.Value.Methods.Select(MethodStr));
+    yield return new Line("}");
+}
+
+static IEnumerable<Item> InterfaceMapItemList(Dictionary<string, Interface> map)
+    => map.SelectMany(InterfaceItemList);
 
 abstract class Item 
 {
@@ -45,7 +56,9 @@ sealed class Line: Item
     }
 
     public override IEnumerable<string> Text(string indent, string offset)
-        => new[] { offset + Value };
+    {
+        yield return offset + Value;
+    }
 }
 
 sealed class Block: Item
@@ -58,11 +71,19 @@ sealed class Block: Item
     }
 
     public override IEnumerable<string> Text(string indent, string offset)
-        => ItemList.SelectMany(item => item.Text(indent, offset));
+        => ItemList.SelectMany(item => item.Text(indent, offset + indent));
 }
 
 static class TextEx
 {
+    public static void Write(this IEnumerable<Item> list, string indent)
+    {
+        foreach (var item in list)
+        {
+            item.Write(indent);
+        }
+    }
+
     public static void Write(this Item item, string indent)
     {
         foreach (var line in item.Text(indent))
