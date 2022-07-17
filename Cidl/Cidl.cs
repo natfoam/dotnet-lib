@@ -51,7 +51,7 @@ namespace Cidl
 
     class Param
     {
-        public readonly IType Type;
+        public readonly TypeRef Type;
         public readonly string Name;
         public Param(ParameterInfo info)
         {
@@ -69,7 +69,7 @@ namespace Cidl
     class Method
     {
         public readonly string Name;
-        public readonly IType? ReturnType;
+        public readonly TypeRef? ReturnType;
         public readonly Param[] Params;
 
         public Method(MethodInfo method)
@@ -99,35 +99,35 @@ namespace Cidl
         Bool,
     }
 
-    interface IType
+    abstract class TypeRef
     {
     }
 
-    class BasicTypeBox : IType
+    sealed class BasicTypeRef : TypeRef
     {
         public readonly BasicType BasicType;
 
-        public BasicTypeBox(BasicType basicType)
+        public BasicTypeRef(BasicType basicType)
         {
             BasicType = basicType;
         }
     }
 
-    class PointerTypeBox : IType
+    sealed class PointerTypeRef : TypeRef
     {
-        public readonly IType Element;
+        public readonly TypeRef Element;
 
-        public PointerTypeBox(Type info)
+        public PointerTypeRef(Type info)
         {
             Element = info.ToCidlType();
         }
     }
 
-    class NameTypeBox : IType
+    sealed class NameTypeRef : TypeRef
     {
         public readonly string Name;
 
-        public NameTypeBox(string name)
+        public NameTypeRef(string name)
         {
             Name = name;
         }
@@ -135,21 +135,21 @@ namespace Cidl
 
     static class TypeEx
     {
-        public static IType? ToCidlReturnType(this MethodInfo info)
+        public static TypeRef? ToCidlReturnType(this MethodInfo info)
         {
             var returnType = info.ReturnType;
             return returnType == typeof(void) ? null : returnType.ToCidlType();
         }
 
-        public static IType ToCidlType(this Type info)
+        public static TypeRef ToCidlType(this Type info)
         {
             {
                 var basicType = info.ToClidBasicType();
-                if (basicType != null) { return new BasicTypeBox(basicType.Value); }
+                if (basicType != null) { return new BasicTypeRef(basicType.Value); }
             }
             return info.IsPointer ? 
-                new PointerTypeBox(info.GetElementType()!) :
-                new NameTypeBox(info.FullName!);
+                new PointerTypeRef(info.GetElementType()!) :
+                new NameTypeRef(info.FullName!);
         }
 
         public static BasicType? ToClidBasicType(this Type info)
@@ -167,12 +167,12 @@ namespace Cidl
                 _ => null, 
             };
 
-        public static string ToCidlString(this IType? type)
+        public static string ToCidlString(this TypeRef? type)
             => type switch
             {
-                BasicTypeBox x => x.BasicType.ToString(),
-                PointerTypeBox p => $"{p.Element.ToCidlString()}*",
-                NameTypeBox n => n.Name,
+                BasicTypeRef x => x.BasicType.ToString(),
+                PointerTypeRef p => $"{p.Element.ToCidlString()}*",
+                NameTypeRef n => n.Name,
                 _ => "void"
             };
     }
