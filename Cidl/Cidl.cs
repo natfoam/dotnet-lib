@@ -32,6 +32,9 @@ namespace Cidl
         {
             Params = info.Select(v => new Param(v)).ToArray();
         }
+
+        public Block Block()
+            => new Block(Params.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")));
     }
 
     class Interface
@@ -47,6 +50,9 @@ namespace Cidl
                 .Select(method => new Method(method))
                 .ToArray();
         }
+
+        public Block Block()
+           => new Block(Methods.Select(m => m.Line()));
     }
 
     class Param
@@ -83,6 +89,12 @@ namespace Cidl
             Name = method.Name;
             ReturnType = method.ToCidlReturnType();
             Params = method.GetParameters().Select(p => new Param(p)).ToArray();
+        }
+
+        public Line Line()
+        {
+            var p = string.Join(", ", Params.Select(v => $"{v.Type.ToCidlString()} {v.Name}"));
+            return new Line($"{ReturnType.ToCidlString()} {Name}({p});");
         }
     }
 
