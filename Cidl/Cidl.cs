@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Cidl
 {
-    class Library
+    sealed class Library
     {
         public readonly Dictionary<string, Struct> StructMap;
         public readonly Dictionary<string, Interface> InterfaceMap;
@@ -74,7 +74,7 @@ namespace Cidl
         }
     }
 
-    class Param
+    sealed class Param
     {
         public readonly TypeRef Type;
         public readonly string Name;
@@ -91,7 +91,7 @@ namespace Cidl
         }
     }
 
-    class Method
+    sealed class Method
     {
         public readonly string Name;
         public readonly TypeRef? ReturnType;
@@ -206,5 +206,21 @@ namespace Cidl
                 NameTypeRef n => n.Name,
                 _ => "void"
             };
+
+        static IEnumerable<KeyValuePair<string, TypeDef>> ToPair(this TypeInfo info, TypeDef def)
+            => new[] { KeyValuePair.Create(info.FullName!, def) };
+
+        public static IEnumerable<KeyValuePair<string, TypeDef>> ToCidlTypeDef(this TypeInfo type)
+        {
+            if (type.IsInterface)
+            {
+                return type.ToPair(new Interface(type));
+            }
+            if (type.IsValueType && !type.IsEnum)
+            {
+                return type.ToPair(new Struct(type.DeclaredFields));
+            }
+            return Enumerable.Empty<KeyValuePair<string, TypeDef>>();
+        }
     }
 }
