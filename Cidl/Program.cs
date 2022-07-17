@@ -8,8 +8,9 @@ var interfaces = a.DefinedTypes
     .Where(type => type.IsInterface)
     .Select(type => (type.FullName, new Interface(type)));
 
-var structures = a.DefinedTypes.Where(type =>
-    type.IsValueType && !type.IsEnum && type.IsLayoutSequential);
+var structures = a.DefinedTypes
+    .Where(type => type.IsValueType && !type.IsEnum && type.IsLayoutSequential)
+    .Select(type => (type.FullName, new Struct(type.DeclaredFields)));
 
 foreach (var (name, i) in interfaces)
 {
@@ -24,11 +25,30 @@ foreach (var (name, i) in interfaces)
     Console.WriteLine($"}}");
 }
 
-foreach (var i in structures)
+foreach (var (name, i) in structures)
 {
-    Console.WriteLine($"struct {i.FullName}");
+    Console.WriteLine($"struct {name}");
     Console.WriteLine($"{{");
+    foreach (var f in i.Params)
+    {
+        Console.WriteLine($"  {f.Type.ToCidlString()} {f.Name};");
+    }
     Console.WriteLine($"}}");
+}
+
+class Struct
+{
+    public readonly Param[] Params;
+
+    public Struct(Param[] @params)
+    {
+        Params = @params;
+    }
+
+    public Struct(IEnumerable<FieldInfo> info)
+    {
+        Params = info.Select(v => new Param(v)).ToArray();
+    }
 }
 
 class Interface
@@ -54,6 +74,12 @@ class Param
     {
         Type = info.ParameterType.ToCidlType();
         Name = info.Name!;
+    }
+
+    public Param(FieldInfo info)
+    {
+        Type = info.DeclaringType!.ToCidlType();
+        Name = info.Name;
     }
 }
 
@@ -114,6 +140,16 @@ class PointerTypeBox : IType
     }
 }
 
+class NameTypeBox : IType
+{
+    public readonly string Name;
+
+    public NameTypeBox(string name)
+    {
+        Name = name;
+    }
+}
+
 static class TypeEx
 {
     public static IType? ToCidlReturnType(this MethodInfo info)
@@ -132,7 +168,7 @@ static class TypeEx
         {
             return new PointerTypeBox(info.GetElementType()!);
         }
-        throw new Exception("unknown type");
+        return new NameTypeBox(info.FullName!);
     }
 
     public static BasicType? ToClidBasicType(this Type info)
@@ -145,6 +181,7 @@ static class TypeEx
         if (info == typeof(uint)) { return BasicType.U32; }
         if (info == typeof(long)) { return BasicType.I64; }
         if (info == typeof(ulong)) { return BasicType.U64; }
+        if (info == typeof(bool)) { return BasicType.Bool; }
         return null;
     }
 
@@ -153,6 +190,7 @@ static class TypeEx
         {
             BasicTypeBox x => x.BasicType.ToString(),
             PointerTypeBox p => $"{p.Element.ToCidlString()}*",
+            NameTypeBox n => n.Name,
             _ => "void"
         };
 }
