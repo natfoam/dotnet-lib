@@ -5,21 +5,14 @@ namespace Cidl
 {
     sealed class Library
     {
-        public readonly Dictionary<string, Struct> StructMap;
-        public readonly Dictionary<string, Interface> InterfaceMap;
+        public readonly Dictionary<string, TypeDef> Map;
         public Library(IEnumerable<TypeInfo> info)
         {
-            InterfaceMap = info
-                .Where(type => type.IsInterface)
-                .ToDictionary(type => type.FullName!, type => new Interface(type));
-
-            StructMap = info
-                .Where(type => type.IsValueType && !type.IsEnum && type.IsLayoutSequential)
-                .ToDictionary(type => type.FullName!, type => new Struct(type.DeclaredFields));
+            Map = info.SelectMany(TypeEx.ToCidlTypeDef).ToDictionary(i => i.Key, i => i.Value);
         }
 
-        //static IEnumerable<Item> List()
-        //    => Enumerable.Concat(InterfaceMapItemList(InterfaceMap), StructMapItemList(StructMap));
+        public IEnumerable<Item> List()
+            => Map.SelectMany(kv => kv.Value.List(kv.Key)); 
     }
 
     abstract class TypeDef 
@@ -211,16 +204,12 @@ namespace Cidl
             => new[] { KeyValuePair.Create(info.FullName!, def) };
 
         public static IEnumerable<KeyValuePair<string, TypeDef>> ToCidlTypeDef(this TypeInfo type)
-        {
-            if (type.IsInterface)
+            => type switch
             {
-                return type.ToPair(new Interface(type));
-            }
-            if (type.IsValueType && !type.IsEnum)
-            {
-                return type.ToPair(new Struct(type.DeclaredFields));
-            }
-            return Enumerable.Empty<KeyValuePair<string, TypeDef>>();
-        }
+                _ when type.IsInterface => type.ToPair(new Interface(type)),
+                _ when type.IsValueType && !type.IsEnum && type.IsLayoutSequential
+                    => type.ToPair(new Struct(type.DeclaredFields)),
+                _ => Enumerable.Empty<KeyValuePair<string, TypeDef>>(),
+            };
     }
 }
