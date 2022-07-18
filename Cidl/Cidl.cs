@@ -70,7 +70,7 @@ namespace Cidl
 
         public Param(FieldInfo info)
         {
-            Type = info.DeclaringType!.ToCidlType();
+            Type = info.FieldType!.ToCidlType();
             Name = info.Name;
         }
     }
@@ -164,7 +164,7 @@ namespace Cidl
             }
             return info.IsPointer ? 
                 new PointerTypeRef(info.GetElementType()!) :
-                new NameTypeRef(info.FullName!);
+                new NameTypeRef(info.Name!);
         }
 
         public static BasicType? ToClidBasicType(this Type info)
@@ -192,7 +192,7 @@ namespace Cidl
             };
 
         static IEnumerable<KeyValuePair<string, TypeDef>> ToPair(this TypeInfo info, TypeDef def)
-            => new[] { KeyValuePair.Create(info.FullName!, def) };
+            => new[] { KeyValuePair.Create(info.Name!, def) };
 
         public static IEnumerable<KeyValuePair<string, TypeDef>> ToCidlTypeDef(this TypeInfo type)
             => type switch
