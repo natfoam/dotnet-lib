@@ -6,6 +6,7 @@ namespace CidlExample
     {
         public int A;
         public int B;
+        public IMy C;
     }
 
     public interface IMy

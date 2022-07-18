@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
+using Text;
 
 namespace Cidl
 {
@@ -36,7 +37,7 @@ namespace Cidl
 
         public override IEnumerable<Item> List(string name)
             => new Block(FieldList.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")))
-                .Curly("struct", name);
+                .Curly($"struct {name}");
     }
 
     sealed class Interface : TypeDef
@@ -55,7 +56,7 @@ namespace Cidl
 
         public override IEnumerable<Item> List(string name)
             => new[] { new Line($"[Guid({Guid})]") }
-                .Concat(new Block(Methods.Select(m => m.Line())).Curly("interface", name));
+                .Concat(new Block(Methods.Select(m => m.Line())).Curly($"interface {name}"));
     }
 
     sealed class Param
