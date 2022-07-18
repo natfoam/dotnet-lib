@@ -50,5 +50,16 @@
                 Console.WriteLine(line);
             }
         }
+
+        static readonly Line CurlyOpen = new Line("{");
+        static readonly Line CurlyClose = new Line("}");
+
+        public static IEnumerable<Item> Curly(this Block block, string type, string name)
+        {
+            yield return new Line($"{type} {name}");
+            yield return CurlyOpen;
+            yield return block;
+            yield return CurlyClose;
+        }
     }
 }

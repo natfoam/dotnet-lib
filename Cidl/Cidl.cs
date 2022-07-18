@@ -34,13 +34,9 @@ namespace Cidl
             FieldList = info.Select(v => new Param(v)).ToArray();
         }
 
-        public override IEnumerable<Item> List(string name) 
-        {
-            yield return new Line($"struct {name}");
-            yield return new Line("{");
-            yield return new Block(FieldList.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")));
-            yield return new Line("}");
-        }
+        public override IEnumerable<Item> List(string name)
+            => new Block(FieldList.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")))
+                .Curly("struct", name);
     }
 
     sealed class Interface : TypeDef
@@ -58,13 +54,8 @@ namespace Cidl
         }
 
         public override IEnumerable<Item> List(string name)
-        {
-            yield return new Line($"[Guid({Guid})]");
-            yield return new Line($"interface {name}");
-            yield return new Line("{");
-            yield return new Block(Methods.Select(m => m.Line()));
-            yield return new Line("}");
-        }
+            => new[] { new Line($"[Guid({Guid})]") }
+                .Concat(new Block(Methods.Select(m => m.Line())).Curly("interface", name));
     }
 
     sealed class Param
