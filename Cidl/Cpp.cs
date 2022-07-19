@@ -26,7 +26,7 @@ namespace Cidl
                 PointerTypeRef p => $"{p.Element.Cpp(library)}*",
                 NameTypeRef n => library.Map[n.Name] switch
                 {
-                    Interface i => $"{n.Name}*",
+                    Interface _ => $"{n.Name}*",
                     _ => n.Name,
                 },
                 _ => "void",
@@ -67,7 +67,9 @@ namespace Cidl
                 .Concat(map.SelectMany(def => def.Cpp(library)));
 
         public static IEnumerable<Item> Cpp(this Library library)
-            => new[] { "#pragma once".Line() }
+            => "#pragma once"
+                .Line()
+                .One()
                 .Concat(library.Map
                     .Cpp(library)
                     .Block()

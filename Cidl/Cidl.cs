@@ -63,14 +63,16 @@ namespace Cidl
             Guid = type.GUID;
             Methods = type
                 .DeclaredMethods
-                .Select(method => new Method(method))
+                .Select(CidlEx.Method)
                 .ToArray();
         }
 
         public override IEnumerable<Item> List(string name)
-            => new[] { $"[Guid({Guid})]".Line() }
+            => $"[Guid({Guid})]"
+                .Line()
+                .One()
                 .Concat(Methods
-                    .Select(m => m.Line())
+                    .Select(CidlEx.Line)
                     .Block()
                     .Curly($"interface {name}"));
     }
@@ -81,13 +83,15 @@ namespace Cidl
         public readonly string Name;
         public Param(ParameterInfo info)
         {
-            Type = info.ParameterType.ToCidlType();
+            Type = info.ParameterType
+                .ToCidlType();
             Name = info.Name!;
         }
 
         public Param(FieldInfo info)
         {
-            Type = info.FieldType!.ToCidlType();
+            Type = info.FieldType!
+                .ToCidlType();
             Name = info.Name;
         }
     }
@@ -100,26 +104,18 @@ namespace Cidl
 
         public Method(MethodInfo method)
         {
-            if (method.CustomAttributes.FirstOrDefault(v =>
-                    v.AttributeType == typeof(PreserveSigAttribute))
+            if (method.CustomAttributes.FirstOrDefault(v => v.AttributeType == typeof(PreserveSigAttribute))
                 == null)
             {
                 throw new Exception("PreserveSig attribute is required");
             }
             Name = method.Name;
-            ReturnType = method.ToCidlReturnType();
+            ReturnType = method
+                .ToCidlReturnType();
             ParamList = method
                 .GetParameters()
                 .Select(CidlEx.Param)
                 .ToArray();
-        }
-
-        public Line Line()
-        {
-            var p = ParamList
-                .Select(v => $"{v.Type.ToCidlString()} {v.Name}")
-                .Join(", ");
-            return $"{ReturnType.ToCidlString()} {Name}({p});".Line();
         }
     }
 
@@ -178,57 +174,89 @@ namespace Cidl
         public static Param Param(this ParameterInfo info)
             => new Param(info);
 
+        public static Method Method(this MethodInfo method)
+            => new Method(method);
+
+        public static Interface Interface(this TypeInfo type)
+            => new Interface(type);
+
+        public static Struct Struct(this TypeInfo type)
+            => new Struct(type.DeclaredFields);
+
+        public static BasicTypeRef Ref(this BasicType basicType)
+            => new BasicTypeRef(basicType);
+
+        public static PointerTypeRef Pointer(this Type type)
+            => new PointerTypeRef(type);
+
+        public static NameTypeRef NameTypeRef(this string name)
+            => new NameTypeRef(name);
+
         public static TypeRef? ToCidlReturnType(this MethodInfo info)
-        {
-            var returnType = info.ReturnType;
-            return returnType == typeof(void) ? null : returnType.ToCidlType();
-        }
+            => info.ReturnType switch
+            {
+                var r when r == typeof(void) => null,
+                var r => r
+                    .ToCidlType(),
+            };
 
         public static TypeRef ToCidlType(this Type info)
-        {
+            => info.ToClidBasicType() switch
             {
-                var basicType = info.ToClidBasicType();
-                if (basicType != null) { return new BasicTypeRef(basicType.Value); }
-            }
-            return info.IsPointer ? 
-                new PointerTypeRef(info.GetElementType()!) :
-                new NameTypeRef(info.Name!);
-        }
+                null when info.IsPointer => info
+                    .GetElementType()!
+                    .Pointer(),
+                null => info.Name!
+                    .NameTypeRef(),
+                var b => b.Value
+                    .Ref()
+            };
 
         public static BasicType? ToClidBasicType(this Type info)
             => info switch 
             { 
-                _ when info == typeof(sbyte) => BasicType.I8,
-                _ when info == typeof(byte) => BasicType.U8,
-                _ when info == typeof(short) => BasicType.I16,
-                _ when info == typeof(ushort) => BasicType.U16,
-                _ when info == typeof(int) => BasicType.I32,
-                _ when info == typeof(uint) => BasicType.U32,
-                _ when info == typeof(long) => BasicType.I64,
-                _ when info == typeof(ulong) => BasicType.U64,
-                _ when info == typeof(bool) => BasicType.Bool,
+                var i when i == typeof(sbyte) => BasicType.I8,
+                var i when i == typeof(byte) => BasicType.U8,
+                var i when i == typeof(short) => BasicType.I16,
+                var i when i == typeof(ushort) => BasicType.U16,
+                var i when i == typeof(int) => BasicType.I32,
+                var i when i == typeof(uint) => BasicType.U32,
+                var i when i == typeof(long) => BasicType.I64,
+                var i when i == typeof(ulong) => BasicType.U64,
+                var i when i == typeof(bool) => BasicType.Bool,
                 _ => null, 
             };
 
         public static string ToCidlString(this TypeRef? type)
             => type switch
             {
-                BasicTypeRef x => x.BasicType.ToString(),
+                BasicTypeRef x => x.BasicType
+                    .ToString(),
                 PointerTypeRef p => $"{p.Element.ToCidlString()}*",
                 NameTypeRef n => n.Name,
                 _ => "void"
             };
 
         static IEnumerable<KeyValuePair<string, TypeDef>> ToPair(this TypeInfo info, TypeDef def)
-            => new[] { KeyValuePair.Create(info.Name!, def) };
+            => KeyValuePair
+                .Create(info.Name!, def)
+                .One();
 
         public static IEnumerable<KeyValuePair<string, TypeDef>> ToCidlTypeDef(this TypeInfo type)
             => type switch
             {
-                _ when type.IsInterface => type.ToPair(new Interface(type)),
-                _ when type.IsValueType && !type.IsEnum && type.IsLayoutSequential
-                    => type.ToPair(new Struct(type.DeclaredFields)),
+                var t when t.IsInterface => t.ToPair(t.Interface()),
+                var t when t.IsValueType && !t.IsEnum && t.IsLayoutSequential => t.ToPair(t.Struct()),
                 _ => Enumerable.Empty<KeyValuePair<string, TypeDef>>(),
             };
+
+        public static string String(this IEnumerable<Param> list)
+            => list
+                .Select(v => $"{v.Type.ToCidlString()} {v.Name}")
+                .Join(", ");
+
+        public static Line Line(this Method m)
+            => $"{m.ReturnType.ToCidlString()} {m.Name}({m.ParamList.String()});"
+                .Line();
     }
 }

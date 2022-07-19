@@ -35,6 +35,9 @@
 
     static class TextEx
     {
+        public static IEnumerable<T> One<T>(this T value)
+            => new[] { value };
+
         public static IEnumerable<string> Text(this IEnumerable<Item> list, string indent)
             => list.SelectMany(i => i.Text(indent));
 
