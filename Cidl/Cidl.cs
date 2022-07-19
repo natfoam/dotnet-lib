@@ -10,8 +10,12 @@ namespace Cidl
         public readonly Dictionary<string, TypeDef> Map;
         public Library(Assembly assembly)
         {
-            Name = assembly.GetName().Name!;
-            Map = assembly.DefinedTypes.SelectMany(TypeEx.ToCidlTypeDef).ToDictionary(i => i.Key, i => i.Value);
+            Name = assembly
+                .GetName()
+                .Name!;
+            Map = assembly.DefinedTypes
+                .SelectMany(CidlEx.ToCidlTypeDef)
+                .ToDictionary(i => i.Key, i => i.Value);
         }
 
         public IEnumerable<Item> List()
@@ -37,7 +41,9 @@ namespace Cidl
 
         public Struct(IEnumerable<FieldInfo> info)
         {
-            FieldList = info.Select(v => new Param(v)).ToArray();
+            FieldList = info
+                .Select(CidlEx.Param)
+                .ToArray();
         }
 
         public override IEnumerable<Item> List(string name)
@@ -104,7 +110,7 @@ namespace Cidl
             ReturnType = method.ToCidlReturnType();
             ParamList = method
                 .GetParameters()
-                .Select(p => new Param(p))
+                .Select(CidlEx.Param)
                 .ToArray();
         }
 
@@ -164,8 +170,14 @@ namespace Cidl
         }
     }
 
-    static class TypeEx
+    static class CidlEx
     {
+        public static Param Param(this FieldInfo info)
+            => new Param(info);
+
+        public static Param Param(this ParameterInfo info)
+            => new Param(info);
+
         public static TypeRef? ToCidlReturnType(this MethodInfo info)
         {
             var returnType = info.ReturnType;
