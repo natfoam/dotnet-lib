@@ -9,11 +9,11 @@ Console.WriteLine(fullPath);
 
 var a = Assembly.LoadFile(fullPath);
 var library = new Library(a);
-library.List().Write("  ");
+library.List().Write("  ", Console.WriteLine);
 
 Console.WriteLine();
 
-CppLibrary(library).Write("  ");
+CppLibrary(library).Write("  ", Console.WriteLine);
 
 static IEnumerable<Item> CppLibrary(Library library)
     => new Block(library.Map.Select(kv => new Line($"struct {kv.Key};"))

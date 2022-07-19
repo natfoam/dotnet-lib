@@ -35,19 +35,19 @@
 
     static class TextEx
     {
-        public static void Write(this IEnumerable<Item> list, string indent)
+        public static void Write(this IEnumerable<Item> list, string indent, Action<string> write)
         {
             foreach (var item in list)
             {
-                item.Write(indent);
+                item.Write(indent, write);
             }
         }
 
-        public static void Write(this Item item, string indent)
+        public static void Write(this Item item, string indent, Action<string> write)
         {
             foreach (var line in item.Text(indent))
             {
-                Console.WriteLine(line);
+                write(line);
             }
         }
 
