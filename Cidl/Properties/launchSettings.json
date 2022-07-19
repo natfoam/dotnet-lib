@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Cidl": {
+      "commandName": "Project",
+      "commandLineArgs": "../../../../CidlExample/bin/Debug/netstandard2.0/CidlExample.dll"
+    }
+  }
+}

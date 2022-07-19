@@ -6,14 +6,16 @@ namespace Cidl
 {
     sealed class Library
     {
+        public readonly string Name;
         public readonly Dictionary<string, TypeDef> Map;
-        public Library(IEnumerable<TypeInfo> info)
+        public Library(Assembly assembly)
         {
-            Map = info.SelectMany(TypeEx.ToCidlTypeDef).ToDictionary(i => i.Key, i => i.Value);
+            Name = assembly.GetName().Name!;
+            Map = assembly.DefinedTypes.SelectMany(TypeEx.ToCidlTypeDef).ToDictionary(i => i.Key, i => i.Value);
         }
 
         public IEnumerable<Item> List()
-            => Map.SelectMany(kv => kv.Value.List(kv.Key)); 
+            => new Block(Map.SelectMany(kv => kv.Value.List(kv.Key))).Curly($"library {Name}"); 
     }
 
     abstract class TypeDef 

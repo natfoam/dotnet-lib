@@ -2,17 +2,24 @@
 using System.Reflection;
 using Text;
 
-var a = Assembly.LoadFile(
-    "/workspaces/dotnet-lib/CidlExample/bin/Debug/netstandard2.0/CidlExample.dll");
+var path = args[0];
+Console.WriteLine(path);
+var fullPath = Path.GetFullPath(path);
+Console.WriteLine(fullPath);
 
-var library = new Library(a.DefinedTypes);
+var a = Assembly.LoadFile(fullPath);
+var library = new Library(a);
 library.List().Write("  ");
 
 Console.WriteLine();
 
-library.Map.Select(kv => new Line($"struct {kv.Key};")).Write("  ");
+CppLibrary(library).Write("  ");
 
-library.Map.SelectMany(def => CppTypeDef(library, def)).Write("  ");
+static IEnumerable<Item> CppLibrary(Library library)
+    => new Block(library.Map.Select(kv => new Line($"struct {kv.Key};"))
+        .Concat(library.Map.SelectMany(def => CppTypeDef(library, def))))
+    .Curly($"namespace {library.Name}");
+
 
 static IEnumerable<Item> CppStruct(Library library, Struct s, string name)
     => new Block(s.FieldList.Select(f => new Line($"{CppTypeRef(library, f.Type)} {f.Name};"))).Curly($"struct {name}");
@@ -35,7 +42,7 @@ static string CppParamList(Library library, IEnumerable<Param> paramList)
     => string.Join(", ", paramList.Select(p => $"{CppTypeRef(library, p.Type)} {p.Name}"));
 
 static string CppBasicType(BasicType type)
-    => type switch 
+    => type switch
     {
         BasicType.I8 => "int8_t",
         BasicType.U8 => "uint8_t",
@@ -45,19 +52,19 @@ static string CppBasicType(BasicType type)
         BasicType.U32 => "uint32_t",
         BasicType.I64 => "int64_t",
         BasicType.U64 => "uint64_t",
-        BasicType.Bool => "BOOL", 
-        _ => "void",        
+        BasicType.Bool => "BOOL",
+        _ => "void",
     };
 
 static string CppTypeRef(Library library, TypeRef? type)
-    => type switch 
+    => type switch
     {
         BasicTypeRef b => CppBasicType(b.BasicType),
         PointerTypeRef p => $"{CppTypeRef(library, p.Element)}*",
-        NameTypeRef n => library.Map[n.Name] switch 
-        { 
-            Interface i => $"{n.Name}*", 
-            _ => n.Name, 
+        NameTypeRef n => library.Map[n.Name] switch
+        {
+            Interface i => $"{n.Name}*",
+            _ => n.Name,
         },
         _ => "void",
     };
