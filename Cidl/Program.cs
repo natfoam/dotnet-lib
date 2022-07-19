@@ -54,6 +54,10 @@ static string CppTypeRef(Library library, TypeRef? type)
     {
         BasicTypeRef b => CppBasicType(b.BasicType),
         PointerTypeRef p => $"{CppTypeRef(library, p.Element)}*",
-        NameTypeRef n => library.Map[n.Name] switch { Interface i => $"{n.Name}*", _ => n.Name, },
+        NameTypeRef n => library.Map[n.Name] switch 
+        { 
+            Interface i => $"{n.Name}*", 
+            _ => n.Name, 
+        },
         _ => "void",
     };
