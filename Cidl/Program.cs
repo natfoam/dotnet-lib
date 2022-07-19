@@ -3,7 +3,7 @@ using System.Reflection;
 using Text;
 
 var a = Assembly.LoadFile(
-    "c:/github.com/natfoam/dotnet-lib/CidlExample/bin/Debug/netstandard2.0/CidlExample.dll");
+    "/workspaces/dotnet-lib/CidlExample/bin/Debug/netstandard2.0/CidlExample.dll");
 
 var library = new Library(a.DefinedTypes);
 library.List().Write("  ");
