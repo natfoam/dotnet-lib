@@ -38,7 +38,7 @@ namespace Cidl
         }
 
         public override IEnumerable<Item> List(string name)
-            => new Block(FieldList.Select(p => new Line($"{p.Type.ToCidlString()} {p.Name};")))
+            => new Block(FieldList.Select(p => $"{p.Type.ToCidlString()} {p.Name};".Line()))
                 .Curly($"struct {name}");
     }
 
@@ -57,7 +57,7 @@ namespace Cidl
         }
 
         public override IEnumerable<Item> List(string name)
-            => new[] { new Line($"[Guid({Guid})]") }
+            => new[] { $"[Guid({Guid})]".Line() }
                 .Concat(new Block(Methods.Select(m => m.Line())).Curly($"interface {name}"));
     }
 
@@ -100,7 +100,7 @@ namespace Cidl
         public Line Line()
         {
             var p = string.Join(", ", ParamList.Select(v => $"{v.Type.ToCidlString()} {v.Name}"));
-            return new Line($"{ReturnType.ToCidlString()} {Name}({p});");
+            return $"{ReturnType.ToCidlString()} {Name}({p});".Line();
         }
     }
 

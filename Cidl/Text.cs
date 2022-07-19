@@ -46,12 +46,14 @@
             }
         }
 
-        static readonly Line CurlyOpen = new Line("{");
-        static readonly Line CurlyClose = new Line("}");
+        public static Line Line(this string line) => new Line(line); 
+
+        static readonly Line CurlyOpen = "{".Line();
+        static readonly Line CurlyClose = "}".Line();
 
         public static IEnumerable<Item> Curly(this Block block, string header)
         {
-            yield return new Line(header);
+            yield return header.Line();
             yield return CurlyOpen;
             yield return block;
             yield return CurlyClose;
