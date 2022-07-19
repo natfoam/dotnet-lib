@@ -15,5 +15,7 @@ namespace CidlExample
         void A();
         [PreserveSig]
         unsafe int B(byte x, ushort* p);
+        [PreserveSig]
+        bool SetS(S s);
     }
 }
