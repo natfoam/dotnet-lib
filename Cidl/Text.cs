@@ -35,19 +35,14 @@
 
     static class TextEx
     {
+        public static IEnumerable<string> Text(this IEnumerable<Item> list, string indent)
+            => list.SelectMany(i => i.Text(indent));
+
         public static void Write(this IEnumerable<Item> list, string indent, Action<string> write)
         {
-            foreach (var item in list)
+            foreach (var item in list.Text(indent))
             {
-                item.Write(indent, write);
-            }
-        }
-
-        public static void Write(this Item item, string indent, Action<string> write)
-        {
-            foreach (var line in item.Text(indent))
-            {
-                write(line);
+                write(item);
             }
         }
 

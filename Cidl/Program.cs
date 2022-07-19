@@ -13,12 +13,15 @@ library.List().Write("  ", Console.WriteLine);
 
 Console.WriteLine();
 
-CppLibrary(library).Write("  ", Console.WriteLine);
+var cppText = CppLibrary(library).Text("    ");
+
+File.WriteAllLines($"{library.Name}.hpp", cppText);
 
 static IEnumerable<Item> CppLibrary(Library library)
-    => new Block(library.Map.Select(kv => new Line($"struct {kv.Key};"))
-        .Concat(library.Map.SelectMany(def => CppTypeDef(library, def))))
-    .Curly($"namespace {library.Name}");
+    => new[] { new Line("#pragma once") }
+        .Concat(new Block(library.Map.Select(kv => new Line($"struct {kv.Key};"))
+                .Concat(library.Map.SelectMany(def => CppTypeDef(library, def))))
+            .Curly($"namespace {library.Name}"));
 
 
 static IEnumerable<Item> CppStruct(Library library, Struct s, string name)
