@@ -46,7 +46,11 @@
             }
         }
 
-        public static Line Line(this string line) => new Line(line); 
+        public static Line Line(this string line) 
+            => new Line(line); 
+
+        public static Block Block(this IEnumerable<Item> list) 
+            => new Block(list);
 
         static readonly Line CurlyOpen = "{".Line();
         static readonly Line CurlyClose = "}".Line();
@@ -58,5 +62,8 @@
             yield return block;
             yield return CurlyClose;
         }
+
+        public static string Join(this IEnumerable<string> list, string separator)
+            => string.Join(separator, list);
     }
 }

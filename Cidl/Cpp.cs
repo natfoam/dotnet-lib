@@ -33,7 +33,9 @@ namespace Cidl
             };
 
         public static string Cpp(this IEnumerable<Param> paramList, Library library)
-            => string.Join(", ", paramList.Select(p => $"{p.Type.Cpp(library)} {p.Name}"));
+            => paramList
+                .Select(p => $"{p.Type.Cpp(library)} {p.Name}")
+                .Join(", ");
 
         public static Item Cpp(this Method m, Library library)
             => $"virtual {m.ReturnType.Cpp(library)} __stdcall {m.Name}({m.ParamList.Cpp(library)}) = 0;"
@@ -48,16 +50,27 @@ namespace Cidl
             };
 
         public static IEnumerable<Item> Cpp(this Struct s, Library library, string name)
-            => new Block(s.FieldList.Select(f => $"{f.Type.Cpp(library)} {f.Name};".Line())).Curly($"struct {name}");
+            => s.FieldList
+                .Select(f => $"{f.Type.Cpp(library)} {f.Name};".Line())
+                .Block()
+                .Curly($"struct {name}");
 
         public static IEnumerable<Item> Cpp(this Interface i, Library library, string name)
-            => new Block(i.Methods.Select(m => m.Cpp(library))).Curly($"struct {name}: IUnknown");
+            => i.Methods
+                .Select(m => m.Cpp(library))
+                .Block()
+                .Curly($"struct {name}: IUnknown");
 
         public static IEnumerable<Item> Cpp(this Dictionary<string, TypeDef> map, Library library)
-            => map.Select(kv => $"struct {kv.Key};".Line()).Concat(map.SelectMany(def => def.Cpp(library)));
+            => map
+                .Select(kv => $"struct {kv.Key};".Line())
+                .Concat(map.SelectMany(def => def.Cpp(library)));
 
         public static IEnumerable<Item> Cpp(this Library library)
             => new[] { "#pragma once".Line() }
-                .Concat(new Block(library.Map.Cpp(library)).Curly($"namespace {library.Name}"));
+                .Concat(library.Map
+                    .Cpp(library)
+                    .Block()
+                    .Curly($"namespace {library.Name}"));
     }
 }

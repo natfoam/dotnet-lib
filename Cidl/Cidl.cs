@@ -15,7 +15,10 @@ namespace Cidl
         }
 
         public IEnumerable<Item> List()
-            => new Block(Map.SelectMany(kv => kv.Value.List(kv.Key))).Curly($"library {Name}"); 
+            => Map
+                .SelectMany(kv => kv.Value.List(kv.Key))
+                .Block()
+                .Curly($"library {Name}"); 
     }
 
     abstract class TypeDef 
@@ -38,7 +41,9 @@ namespace Cidl
         }
 
         public override IEnumerable<Item> List(string name)
-            => new Block(FieldList.Select(p => $"{p.Type.ToCidlString()} {p.Name};".Line()))
+            => FieldList
+                .Select(p => $"{p.Type.ToCidlString()} {p.Name};".Line())
+                .Block()
                 .Curly($"struct {name}");
     }
 
@@ -58,7 +63,10 @@ namespace Cidl
 
         public override IEnumerable<Item> List(string name)
             => new[] { $"[Guid({Guid})]".Line() }
-                .Concat(new Block(Methods.Select(m => m.Line())).Curly($"interface {name}"));
+                .Concat(Methods
+                    .Select(m => m.Line())
+                    .Block()
+                    .Curly($"interface {name}"));
     }
 
     sealed class Param
@@ -94,12 +102,17 @@ namespace Cidl
             }
             Name = method.Name;
             ReturnType = method.ToCidlReturnType();
-            ParamList = method.GetParameters().Select(p => new Param(p)).ToArray();
+            ParamList = method
+                .GetParameters()
+                .Select(p => new Param(p))
+                .ToArray();
         }
 
         public Line Line()
         {
-            var p = string.Join(", ", ParamList.Select(v => $"{v.Type.ToCidlString()} {v.Name}"));
+            var p = ParamList
+                .Select(v => $"{v.Type.ToCidlString()} {v.Name}")
+                .Join(", ");
             return $"{ReturnType.ToCidlString()} {Name}({p});".Line();
         }
     }
